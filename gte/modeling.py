@@ -20,6 +20,8 @@ from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.utils.checkpoint
+from torch.utils.checkpoint import checkpoint
+
 from torch import nn
 
 import torch.distributed as dist
@@ -693,7 +695,23 @@ class NewEncoder(nn.Module):
         super().__init__()
         self.config = config
         self.layer = nn.ModuleList([NewLayer(config) for _ in range(config.num_hidden_layers)])
-        self.gradient_checkpointing = False
+        self.gradient_checkpointing = config.gradient_checkpointing
+
+    def _gradient_checkpointing_func(self, layer_call, hidden_states, attention_bias=None, rope_embeds=None, attention_scale=None, subset_indices=None, head_mask=None, output_attentions=False):
+        tensor_args = [arg for arg in [hidden_states, attention_bias, attention_scale, subset_indices, head_mask] if arg is not None]
+        
+        non_tensor_kwargs = {
+            'rope_embeds': rope_embeds,
+            'output_attentions': output_attentions
+        }
+        
+        wrapped_layer_call = lambda *args: layer_call(
+            *args,
+            rope_embeds=rope_embeds,
+            output_attentions=output_attentions
+        )
+        
+        return checkpoint(wrapped_layer_call, *tensor_args)
 
     def forward(
         self,
@@ -1594,48 +1612,87 @@ def cl_forward(
             loss = loss_fct(cos_sim, labels)
             self.custom_epoch_info["cl_loss"].append(loss)
         elif loss_type=="sparsity":
-            normalize_z1=z1/torch.norm(z1, dim=1, keepdim=True)
-            normalize_z2=z2/torch.norm(z2, dim=1, keepdim=True)
-            normalize_z3=z3/torch.norm(z3, dim=1, keepdim=True)
+            # normalize_z1=z1/torch.norm(z1, dim=1, keepdim=True)
+            # normalize_z2=z2/torch.norm(z2, dim=1, keepdim=True)
+            # normalize_z3=z3/torch.norm(z3, dim=1, keepdim=True)
+
+            # labels = torch.arange(z1.size(0)).long().to(self.device)
+            # loss_fct = nn.CrossEntropyLoss()
+
+            # normalized_z12=normalize_z1-normalize_z2
+            # normalized_z13=normalize_z1-normalize_z3
+            # normalized_z12_all=normalize_z1.unsqueeze(1)-normalize_z2.unsqueeze(0)
+            # normalized_z13_all=normalize_z1.unsqueeze(1)-normalize_z3.unsqueeze(0)
+
+
+            # l1_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6)
+            # l2_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=2,dim=-1),min=1e-6)
+            # l1l2_ratio_z12=torch.mean(l1_normalized_z12/l2_normalized_z12)   
+            
+            # l1_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6)
+            # l2_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=2,dim=-1),min=1e-6)
+            # l1l2_ratio_z13=torch.mean(l1_normalized_z13/l2_normalized_z13)   
+
+
+            # l1_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6) 
+            # l2_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=2,dim=-1),min=1e-6)
+            # l1l2_ratio_z12_all=torch.mean(l1_normalized_z12_all/l2_normalized_z12_all)
+            # hoyer_z12=(self.sqrt_hidden_size-l1_normalized_z12_all/l2_normalized_z12_all)/(self.sqrt_hidden_size-1)/self.model_args.sparsity_temp
+
+            # l1_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6) 
+            # l2_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=2,dim=-1),min=1e-6)
+            # l1l2_ratio_z13_all=torch.mean(l1_normalized_z13_all/l2_normalized_z13_all)
+
+            # weights = torch.tensor([[0.0] * i + [self.model_args.hard_negative_weight] + [0.0] * (z3.size(0) - i - 1) for i in range(z3.size(0))]).to(self.device)
+
+            # hoyer_z13=(self.sqrt_hidden_size+weights-l1_normalized_z13_all/l2_normalized_z13_all)/(self.sqrt_hidden_size-1)/self.model_args.sparsity_temp
+
+            # hoyer_sim=torch.cat([hoyer_z12,hoyer_z13],1)
+
+            # cos_sim=hoyer_sim
+
+            # sparsity_loss=loss_fct(hoyer_sim,labels)
+
+            # loss=sparsity_loss
+
+            normalize_z1 = z1.div_(torch.norm(z1, dim=1, keepdim=True))
+            normalize_z2 = z2.div_(torch.norm(z2, dim=1, keepdim=True))
+            normalize_z3 = z3.div_(torch.norm(z3, dim=1, keepdim=True))
 
             labels = torch.arange(z1.size(0)).long().to(self.device)
             loss_fct = nn.CrossEntropyLoss()
 
-            normalized_z12=normalize_z1-normalize_z2
-            normalized_z13=normalize_z1-normalize_z3
-            normalized_z12_all=normalize_z1.unsqueeze(1)-normalize_z2.unsqueeze(0)
-            normalized_z13_all=normalize_z1.unsqueeze(1)-normalize_z3.unsqueeze(0)
+            normalized_z12 = normalize_z1 - normalize_z2
+            normalized_z13 = normalize_z1 - normalize_z3
 
+            l1_normalized_z12 = torch.clamp(torch.norm(normalized_z12, p=1, dim=-1), min=self.sqrt_hidden_size*1e-6)
+            l2_normalized_z12 = torch.clamp(torch.norm(normalized_z12, p=2, dim=-1), min=1e-6)
+            l1l2_ratio_z12 = torch.mean(l1_normalized_z12 / l2_normalized_z12)
 
-            l1_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6)
-            l2_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=2,dim=-1),min=1e-6)
-            l1l2_ratio_z12=torch.mean(l1_normalized_z12/l2_normalized_z12)   
-            
-            l1_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6)
-            l2_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=2,dim=-1),min=1e-6)
-            l1l2_ratio_z13=torch.mean(l1_normalized_z13/l2_normalized_z13)   
+            l1_normalized_z13 = torch.clamp(torch.norm(normalized_z13, p=1, dim=-1), min=self.sqrt_hidden_size*1e-6)
+            l2_normalized_z13 = torch.clamp(torch.norm(normalized_z13, p=2, dim=-1), min=1e-6)
+            l1l2_ratio_z13 = torch.mean(l1_normalized_z13 / l2_normalized_z13)
 
+            normalized_z12_all = normalize_z1.unsqueeze(1) - normalize_z2.unsqueeze(0)
+            normalized_z13_all = normalize_z1.unsqueeze(1) - normalize_z3.unsqueeze(0)
 
-            l1_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6) 
-            l2_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=2,dim=-1),min=1e-6)
-            l1l2_ratio_z12_all=torch.mean(l1_normalized_z12_all/l2_normalized_z12_all)
-            hoyer_z12=(self.sqrt_hidden_size-l1_normalized_z12_all/l2_normalized_z12_all)/(self.sqrt_hidden_size-1)/self.model_args.sparsity_temp
+            l1_normalized_z12_all = torch.clamp(torch.norm(normalized_z12_all, p=1, dim=-1), min=self.sqrt_hidden_size*1e-6)
+            l2_normalized_z12_all = torch.clamp(torch.norm(normalized_z12_all, p=2, dim=-1), min=1e-6)
+            l1l2_ratio_z12_all = torch.mean(l1_normalized_z12_all / l2_normalized_z12_all)
 
-            l1_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=1,dim=-1),min=self.sqrt_hidden_size*1e-6) 
-            l2_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=2,dim=-1),min=1e-6)
-            l1l2_ratio_z13_all=torch.mean(l1_normalized_z13_all/l2_normalized_z13_all)
+            l1_normalized_z13_all = torch.clamp(torch.norm(normalized_z13_all, p=1, dim=-1), min=self.sqrt_hidden_size*1e-6)
+            l2_normalized_z13_all = torch.clamp(torch.norm(normalized_z13_all, p=2, dim=-1), min=1e-6)
+            l1l2_ratio_z13_all = torch.mean(l1_normalized_z13_all / l2_normalized_z13_all)
 
-            weights = torch.tensor([[0.0] * i + [self.model_args.hard_negative_weight] + [0.0] * (z3.size(0) - i - 1) for i in range(z3.size(0))]).to(self.device)
+            weights = torch.zeros(z3.size(0), z3.size(0), device=self.device)
+            weights.scatter_(1, torch.arange(z3.size(0)).unsqueeze(1), self.model_args.hard_negative_weight)
 
-            hoyer_z13=(self.sqrt_hidden_size+weights-l1_normalized_z13_all/l2_normalized_z13_all)/(self.sqrt_hidden_size-1)/self.model_args.sparsity_temp
+            hoyer_z12 = (self.sqrt_hidden_size - l1_normalized_z12_all / l2_normalized_z12_all) / (self.sqrt_hidden_size - 1) / self.model_args.sparsity_temp
+            hoyer_z13 = (self.sqrt_hidden_size + weights - l1_normalized_z13_all / l2_normalized_z13_all) / (self.sqrt_hidden_size - 1) / self.model_args.sparsity_temp
 
-            hoyer_sim=torch.cat([hoyer_z12,hoyer_z13],1)
+            hoyer_sim = torch.cat([hoyer_z12, hoyer_z13], dim=1)
 
-            cos_sim=hoyer_sim
-
-            sparsity_loss=loss_fct(hoyer_sim,labels)
-
-            loss=sparsity_loss
+            sparsity_loss = loss_fct(hoyer_sim, labels)
 
             # self.custom_epoch_info["cl_loss"].append(cl_loss)
             self.custom_epoch_info["sparsity_loss"].append(sparsity_loss)

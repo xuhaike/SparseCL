@@ -18,16 +18,18 @@ To conduct the experiments, use the following scripts provided in our repository
 To perform standard contrastive learning on the Arguana dataset, run:
 ```bash
 ./run_train_cl_arguana.sh
+```
 
 ### Sparse Contrastive Learning
 
 Run the following script to perform SparseCL on Arguana:
 ```bash
 ./run_train_sparsecl_arguana.sh
-
+```
 ### Testing the Model
 
 Finally, test Arguana by running the following script:
 ```bash
 ./run_test_arguana.sh
+```
 
