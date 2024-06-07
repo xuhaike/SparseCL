@@ -1,4 +1,4 @@
-# Reproducing Results on the Arguana Dataset
+# SparseCL 
 
 In the supplementary material, we provide the necessary code to reproduce our main results on the Arguana dataset. All the training and test data are located in the **data** folder.
 
