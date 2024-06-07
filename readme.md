@@ -4,6 +4,10 @@ This repository contains the official implementation and data for "SPARSECL: Spa
 Contradiction Retrieval".
 In the supplementary material, we provide the necessary code to reproduce our main results on the Arguana dataset. All the training and test data are located in the **data** folder.
 
+[[Webpage](https://sparsecl.github.io/)] [[Paper](preprint.pdf)] [[Huggingface Dataset](TBD)] [[Twitter](TBD)]
+
+
+
 ## Source Code Attribution
 
 Part of our code is adapted from [SimCSE at Princeton NLP](https://github.com/princeton-nlp/SimCSE).
