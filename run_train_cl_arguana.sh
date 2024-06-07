@@ -6,6 +6,7 @@ python train.py \
     --eval_file data/arguana_validation_final.csv \
     --output_dir result/our-bge-arguana-finetune \
     --num_train_epochs 1 \
+    --gradient_checkpointing True \
     --per_device_train_batch_size 64 \
     --per_device_eval_batch_size 64 \
     --gradient_accumulation_steps 1 \
