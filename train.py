@@ -121,12 +121,6 @@ class ModelArguments:
             "help": "Whether to use MLM auxiliary objective."
         }
     )
-    gradient_checkpointing: bool = field(
-        default=False,
-        metadata={
-            "help": "Whether to use gradient checkpointing or not."
-        }
-    )
     mlm_weight: float = field(
         default=0.1,
         metadata={
@@ -394,7 +388,7 @@ def main():
     else:
         config = CONFIG_MAPPING[model_args.model_type]()
         logger.warning("You are instantiating a new config instance from scratch.")
-    if model_args.gradient_checkpointing:
+    if training_args.gradient_checkpointing:
         config.gradient_checkpointing = True
     
     tokenizer_kwargs = {

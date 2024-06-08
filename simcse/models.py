@@ -18,7 +18,8 @@ from transformers.modeling_outputs import SequenceClassifierOutput, BaseModelOut
 import math
 from torch.utils.checkpoint import checkpoint
 from typing import List, Optional, Tuple, Union
-logger = logging.get_logger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 class OurBertEncoder(nn.Module):
     def __init__(self, config):
