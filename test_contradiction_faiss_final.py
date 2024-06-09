@@ -6,7 +6,6 @@ import torch.nn.functional as F
 
 from torch import Tensor
 
-import transformers
 from transformers import (
     CONFIG_MAPPING,
     MODEL_FOR_MASKED_LM_MAPPING,
@@ -14,64 +13,37 @@ from transformers import (
     AutoModel,
     AutoTokenizer,
     HfArgumentParser,
-    Trainer,
-    TrainingArguments,
 )
 
-from sentence_transformers import SentenceTransformer
+import random
+from datetime import datetime
 
 import torch
 import numpy as np
-import json
-
-import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
-
-# from InstructorEmbedding import INSTRUCTOR
-import statistics
 
 from dataclasses import dataclass, field
 
-from typing import Optional, Union, List, Dict, Tuple
-
-import sys
-
-# sys.path.append('../SimCSE')
+from typing import Optional, List, Dict
 
 from simcse.models import our_BertForCL
 from gte.modeling import NewModelForCL
-
-from datasets import load_dataset
-
-import matplotlib.pyplot as plt
-
-import bisect
-
-import heapq
-
-import multiprocessing
 from multiprocessing import Pool
 
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_MASKED_LM_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
 
-# import S3BERT.src.config as config
-# import S3BERT.src.config_s3bert_all_mpnet_base_v2 as config
 
-# from sentence_transformers import SentenceTransformer
+from beir import LoggingHandler
+from beir.retrieval import models
+from beir.retrieval.evaluation import EvaluateRetrieval
+from beir.retrieval.search.dense import DenseRetrievalExactSearch as DRES
 
-import random
-
-from datetime import datetime
-
-import json
-
+import logging
+import os
+import pickle
 from tqdm import tqdm
-
 import math
-
 import copy
-import argparse
 import faiss
 from torch.utils.data import DataLoader
 
@@ -229,15 +201,7 @@ class ModelArguments:
         },
     )
 
-from beir import util, LoggingHandler
-from beir.retrieval import models
-from beir.datasets.data_loader import GenericDataLoader
-from beir.retrieval.evaluation import EvaluateRetrieval
-from beir.retrieval.search.dense import DenseRetrievalExactSearch as DRES
 
-import logging
-import pathlib, os
-import pickle
 
 #### Just some code to print debug information to stdout
 logging.basicConfig(format='%(asctime)s - %(message)s',
@@ -517,9 +481,6 @@ else:
 index.hnsw.efSearch = 1000
 k_neighbors=1000
 D,ids=index.search(cos_query_embeddings,k=k_neighbors)
-
-# print(D[:10,:10])
-# print(ids[:10,:10])
 
 print("search completes!")
 
