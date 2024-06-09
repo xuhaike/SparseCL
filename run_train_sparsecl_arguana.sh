@@ -1,3 +1,5 @@
+# BGE finetuning on Arguana dataset using SparseCL
+
 python train.py \
     --model_name our-bge \
     --model_name_or_path BAAI/bge-base-en-v1.5 \
@@ -5,6 +7,7 @@ python train.py \
     --train_file data/arguana_training_final.csv \
     --eval_file data/arguana_validation_final.csv \
     --output_dir result/our-bge-arguana-sparsity \
+    --gradient_checkpointing True \
     --num_train_epochs 3 \
     --per_device_train_batch_size 64 \
     --per_device_eval_batch_size 64 \
