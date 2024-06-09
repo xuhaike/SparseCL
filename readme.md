@@ -24,18 +24,40 @@ To conduct the experiments, use the following scripts provided in our repository
 To perform standard contrastive learning on the Arguana dataset, run:
 ```bash
 ./run_train_cl_arguana.sh
+
+# train on hotpotqa
+./run_train_cl_hotpotqa.sh
+
+# train on msmarco
+./run_train_cl_msmarco.sh
 ```
 
 ### Sparse Contrastive Learning
 
 Run the following script to perform SparseCL on Arguana:
 ```bash
+# train on arguana
 ./run_train_sparsecl_arguana.sh
+
+# train on hotpotqa
+./run_train_sparsecl_hotpotqa.sh
+
+# train on msmarco
+./run_train_sparsecl_msmarco.sh
 ```
 ### Testing the Model
 
 Finally, test Arguana by running the following script:
 ```bash
+# test on arguana
 ./run_test_arguana.sh
+
+# test on hotpotqa
+./run_test_hotpotqa.sh
+
+# test on msmarco
+./run_test_msmarco.sh
 ```
 
+## Contact
+If you have any questions about the implementation, please contact linzongy21@cs.ucla.edu or haikexu@mit.edu
