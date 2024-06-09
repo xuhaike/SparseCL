@@ -105,7 +105,7 @@ class ModelArguments:
         metadata={
             "help": "What kind of pooler to use (cls, cls_before_pooler, avg, avg_top2, avg_first_last)."
         }
-    ) 
+    )
     hard_negative_weight: float = field(
         default=0,
         metadata={
@@ -301,7 +301,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         device = torch.device("cuda" if use_cuda else "cpu")
         # device = "cpu"
 
-        print(torch.cuda.device_count()) 
+        print(torch.cuda.device_count())
         print("model path", model_path)
 
         tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -375,11 +375,11 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         angle = AnglE.from_pretrained('WhereIsAI/UAE-Large-V1', pooling_strategy='cls').cuda()
         batch_size=32
         raw_embeddings=torch.zeros(len(input_texts), 1024)
-        with torch.no_grad(): 
+        with torch.no_grad():
             for i in tqdm(range(0,len(input_texts),batch_size)):
                 mini_embeddings = angle.encode(input_texts[i:min(i+batch_size,len(input_texts))])
                 raw_embeddings[i:min(i+batch_size,len(input_texts))]=torch.from_numpy(mini_embeddings)
-    
+
     # normalize
     raw_embeddings=raw_embeddings/torch.norm(raw_embeddings, dim=1, keepdim=True)
     raw_embeddings=raw_embeddings.cpu()
@@ -614,12 +614,12 @@ def process_query(query_name):
             else:
                 assert(False)
             score.append((dist(cos_input_embeddings[pid],cos_query_embeddings[qid],"cos"),pid_name,dist(input_embeddings[pid],query_embeddings[qid],"hoyer")))
-        
+
         cos_results[query_name]={}
         for i in range(10):
             cos_results[query_name][score[i][1]]=float(score[i][0])
 
-        
+
         score=sorted(score,key=lambda x: float(x[0]+alpha*x[2]),reverse=True)
         # score=sorted(score,key=lambda x: float(x[2]),reverse=True)
         results[query_name]={}
@@ -669,8 +669,8 @@ def retrieval_test():
         for key,value in cos_res.items():
             cos_results[key]=value
 
-    #### Evaluate your model with NDCG@k, MAP@K, Recall@K and Precision@K  where k = [1,3,5,10,100,1000] 
-    
+    #### Evaluate your model with NDCG@k, MAP@K, Recall@K and Precision@K  where k = [1,3,5,10,100,1000]
+
     if test_setting!=2:
         print("cos retrieval results(qrels)")
         print("cos retrieval results(qrels)",file=output_file)
@@ -691,7 +691,7 @@ def retrieval_test():
             ndcg, _map, recall, precision = retriever.evaluate(contra_qrels, results, [1,3,10])
             print(ndcg,recall)
             print(ndcg,recall,file=output_file)
-        
+
         counter=0
         for qid in results:
             keys=list(results[qid].keys())
