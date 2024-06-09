@@ -108,7 +108,7 @@ class ModelArguments:
         metadata={
             "help": "What kind of pooler to use (cls, cls_before_pooler, avg, avg_top2, avg_first_last)."
         }
-    ) 
+    )
     hard_negative_weight: float = field(
         default=0,
         metadata={
@@ -171,7 +171,7 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
-    # Huggingface's original arguments. 
+    # Huggingface's original arguments.
     dataset_name: Optional[str] = field(
         default=None, metadata={"help": "The name of the dataset to use (via the datasets library)."}
     )
@@ -194,11 +194,11 @@ class DataTrainingArguments:
 
     # SimCSE's arguments
     train_file: Optional[str] = field(
-        default=None, 
+        default=None,
         metadata={"help": "The training data file (.txt or .csv)."}
     )
     eval_file: Optional[str] = field(
-        default=None, 
+        default=None,
         metadata={"help": "The validation data file (.txt or .csv)."}
     )
     max_seq_length: Optional[int] = field(
@@ -216,7 +216,7 @@ class DataTrainingArguments:
         },
     )
     mlm_probability: float = field(
-        default=0.15, 
+        default=0.15,
         metadata={"help": "Ratio of tokens to mask for MLM (only effective if --do_mlm)"}
     )
 
@@ -232,7 +232,7 @@ class DataTrainingArguments:
 @dataclass
 class OurTrainingArguments(TrainingArguments):
     # Evaluation
-    ## By default, we evaluate STS (dev) during training (for selecting best checkpoints) and evaluate 
+    ## By default, we evaluate STS (dev) during training (for selecting best checkpoints) and evaluate
     ## both STS and transfer tasks (dev) at the end of training. Using --eval_transfer will allow evaluating
     ## both STS and transfer tasks (dev) during training.
     eval_transfer: bool = field(
@@ -390,7 +390,7 @@ def main():
         logger.warning("You are instantiating a new config instance from scratch.")
     if training_args.gradient_checkpointing:
         config.gradient_checkpointing = True
-    
+
     tokenizer_kwargs = {
         "cache_dir": model_args.cache_dir,
         "use_fast": model_args.use_fast_tokenizer,
@@ -435,7 +435,7 @@ def main():
                     cache_dir=model_args.cache_dir,
                     revision=model_args.model_revision,
                     use_auth_token=True if model_args.use_auth_token else None,
-                    model_args=model_args                  
+                    model_args=model_args
                 )
             elif 'bert' in model_args.model_name_or_path:
                 model = BertForCL.from_pretrained(
@@ -488,20 +488,20 @@ def main():
     def prepare_features(examples):
         # padding = longest (default)
         #   If no sentence in the batch exceed the max length, then use
-        #   the max sentence length in the batch, otherwise use the 
+        #   the max sentence length in the batch, otherwise use the
         #   max sentence length in the argument and truncate those that
         #   exceed the max length.
         # padding = max_length (when pad_to_max_length, for pressure test)
         #   All sentences are padded/truncated to data_args.max_seq_length.
         total = len(examples[sent0_cname])
 
-        # Avoid "None" fields 
+        # Avoid "None" fields
         for idx in range(total):
             if examples[sent0_cname][idx] is None:
                 examples[sent0_cname][idx] = " "
             if examples[sent1_cname][idx] is None:
                 examples[sent1_cname][idx] = " "
-        
+
         sentences = examples[sent0_cname] + examples[sent1_cname]
 
         # If hard negative exists
@@ -510,7 +510,7 @@ def main():
                 if examples[sent2_cname][idx] is None:
                     examples[sent2_cname][idx] = " "
             sentences += examples[sent2_cname]
-        
+
         if sent3_cname is not None:
             for idx in range(total):
                 if examples[sent3_cname][idx] is None:
@@ -534,7 +534,7 @@ def main():
         else:
             for key in sent_features:
                 features[key] = [[sent_features[key][i], sent_features[key][i+total]] for i in range(total)]
-            
+
         return features
 
     if training_args.do_train:
@@ -600,7 +600,7 @@ def main():
                 del batch["label_ids"]
 
             return batch
-        
+
         def mask_tokens(
             self, inputs: torch.Tensor, special_tokens_mask: Optional[torch.Tensor] = None
         ) -> Tuple[torch.Tensor, torch.Tensor]:

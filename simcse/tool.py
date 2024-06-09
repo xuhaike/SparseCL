@@ -18,7 +18,7 @@ class SimCSE(object):
     """
     A class for embedding sentences, calculating similarities, and retriving sentences by SimCSE.
     """
-    def __init__(self, model_name_or_path: str, 
+    def __init__(self, model_name_or_path: str,
                 device: str = None,
                 num_cells: int = 100,
                 num_cells_in_search: int = 10,
@@ -42,9 +42,9 @@ class SimCSE(object):
             self.pooler = "cls_before_pooler"
         else:
             self.pooler = "cls"
-    
-    def encode(self, sentence: Union[str, List[str]], 
-                device: str = None, 
+
+    def encode(self, sentence: Union[str, List[str]],
+                device: str = None,
                 return_numpy: bool = False,
                 normalize_to_unit: bool = True,
                 keepdim: bool = False,
@@ -53,21 +53,21 @@ class SimCSE(object):
 
         target_device = self.device if device is None else device
         self.model = self.model.to(target_device)
-        
+
         single_sentence = False
         if isinstance(sentence, str):
             sentence = [sentence]
             single_sentence = True
 
-        embedding_list = [] 
+        embedding_list = []
         with torch.no_grad():
             total_batch = len(sentence) // batch_size + (1 if len(sentence) % batch_size > 0 else 0)
             for batch_id in tqdm(range(total_batch)):
                 inputs = self.tokenizer(
-                    sentence[batch_id*batch_size:(batch_id+1)*batch_size], 
-                    padding=True, 
-                    truncation=True, 
-                    max_length=max_length, 
+                    sentence[batch_id*batch_size:(batch_id+1)*batch_size],
+                    padding=True,
+                    truncation=True,
+                    max_length=max_length,
                     return_tensors="pt"
                 )
                 inputs = {k: v.to(target_device) for k, v in inputs.items()}
@@ -82,43 +82,43 @@ class SimCSE(object):
                     embeddings = embeddings / embeddings.norm(dim=1, keepdim=True)
                 embedding_list.append(embeddings.cpu())
         embeddings = torch.cat(embedding_list, 0)
-        
+
         if single_sentence and not keepdim:
             embeddings = embeddings[0]
-        
+
         if return_numpy and not isinstance(embeddings, ndarray):
             return embeddings.numpy()
         return embeddings
-    
-    def similarity(self, queries: Union[str, List[str]], 
-                    keys: Union[str, List[str], ndarray], 
+
+    def similarity(self, queries: Union[str, List[str]],
+                    keys: Union[str, List[str], ndarray],
                     device: str = None) -> Union[float, ndarray]:
-        
+
         query_vecs = self.encode(queries, device=device, return_numpy=True) # suppose N queries
-        
+
         if not isinstance(keys, ndarray):
             key_vecs = self.encode(keys, device=device, return_numpy=True) # suppose M keys
         else:
             key_vecs = keys
 
         # check whether N == 1 or M == 1
-        single_query, single_key = len(query_vecs.shape) == 1, len(key_vecs.shape) == 1 
+        single_query, single_key = len(query_vecs.shape) == 1, len(key_vecs.shape) == 1
         if single_query:
             query_vecs = query_vecs.reshape(1, -1)
         if single_key:
             key_vecs = key_vecs.reshape(1, -1)
-        
+
         # returns an N*M similarity array
         similarities = cosine_similarity(query_vecs, key_vecs)
-        
+
         if single_query:
             similarities = similarities[0]
             if single_key:
                 similarities = float(similarities[0])
-        
+
         return similarities
-    
-    def build_index(self, sentences_or_file_path: Union[str, List[str]], 
+
+    def build_index(self, sentences_or_file_path: Union[str, List[str]],
                         use_faiss: bool = None,
                         faiss_fast: bool = False,
                         device: str = None,
@@ -128,11 +128,11 @@ class SimCSE(object):
             try:
                 import faiss
                 assert hasattr(faiss, "IndexFlatIP")
-                use_faiss = True 
+                use_faiss = True
             except:
                 logger.warning("Fail to import faiss. If you want to use faiss, install faiss through PyPI. Now the program continues with brute force search.")
                 use_faiss = False
-        
+
         # if the input sentence is a string, we assume it's the path of file that stores various sentences
         if isinstance(sentences_or_file_path, str):
             sentences = []
@@ -141,17 +141,17 @@ class SimCSE(object):
                 for line in tqdm(f):
                     sentences.append(line.rstrip())
             sentences_or_file_path = sentences
-        
+
         logger.info("Encoding embeddings for sentences...")
         embeddings = self.encode(sentences_or_file_path, device=device, batch_size=batch_size, normalize_to_unit=True, return_numpy=True)
 
         logger.info("Building index...")
         self.index = {"sentences": sentences_or_file_path}
-        
+
         if use_faiss:
-            quantizer = faiss.IndexFlatIP(embeddings.shape[1])  
+            quantizer = faiss.IndexFlatIP(embeddings.shape[1])
             if faiss_fast:
-                index = faiss.IndexIVFFlat(quantizer, embeddings.shape[1], min(self.num_cells, len(sentences_or_file_path)), faiss.METRIC_INNER_PRODUCT) 
+                index = faiss.IndexIVFFlat(quantizer, embeddings.shape[1], min(self.num_cells, len(sentences_or_file_path)), faiss.METRIC_INNER_PRODUCT)
             else:
                 index = quantizer
 
@@ -163,10 +163,10 @@ class SimCSE(object):
                     index = faiss.index_cpu_to_gpu(res, 0, index)
                 else:
                     logger.info("Use CPU-version faiss")
-            else: 
+            else:
                 logger.info("Use CPU-version faiss")
 
-            if faiss_fast:            
+            if faiss_fast:
                 index.train(embeddings.astype(np.float32))
             index.add(embeddings.astype(np.float32))
             index.nprobe = min(self.num_cells_in_search, len(sentences_or_file_path))
@@ -180,7 +180,7 @@ class SimCSE(object):
     def add_to_index(self, sentences_or_file_path: Union[str, List[str]],
                         device: str = None,
                         batch_size: int = 64):
-        
+
         # if the input sentence is a string, we assume it's the path of file that stores various sentences
         if isinstance(sentences_or_file_path, str):
             sentences = []
@@ -189,10 +189,10 @@ class SimCSE(object):
                 for line in tqdm(f):
                     sentences.append(line.rstrip())
             sentences_or_file_path = sentences
-        
+
         logger.info("Encoding embeddings for sentences...")
         embeddings = self.encode(sentences_or_file_path, device=device, batch_size=batch_size, normalize_to_unit=True, return_numpy=True)
-        
+
         if self.is_faiss_index:
             self.index["index"].add(embeddings.astype(np.float32))
         else:
@@ -201,12 +201,12 @@ class SimCSE(object):
         logger.info("Finished")
 
 
-    
-    def search(self, queries: Union[str, List[str]], 
-                device: str = None, 
+
+    def search(self, queries: Union[str, List[str]],
+                device: str = None,
                 threshold: float = 0.6,
                 top_k: int = 5) -> Union[List[Tuple[str, float]], List[List[Tuple[str, float]]]]:
-        
+
         if not self.is_faiss_index:
             if isinstance(queries, list):
                 combined_results = []
@@ -214,7 +214,7 @@ class SimCSE(object):
                     results = self.search(query, device, threshold, top_k)
                     combined_results.append(results)
                 return combined_results
-            
+
             similarities = self.similarity(queries, self.index["index"]).tolist()
             id_and_score = []
             for i, s in enumerate(similarities):
@@ -227,11 +227,11 @@ class SimCSE(object):
             query_vecs = self.encode(queries, device=device, normalize_to_unit=True, keepdim=True, return_numpy=True)
 
             distance, idx = self.index["index"].search(query_vecs.astype(np.float32), top_k)
-            
+
             def pack_single_result(dist, idx):
                 results = [(self.index["sentences"][i], s) for i, s in zip(idx, dist) if s >= threshold]
                 return results
-            
+
             if isinstance(queries, list):
                 combined_results = []
                 for i in range(len(queries)):
@@ -274,7 +274,7 @@ if __name__=="__main__":
         for sentence, score in result:
             print("    {}  (cosine similarity: {:.4f})".format(sentence, score))
         print("")
-    
+
     print("\n=========Search with Faiss backend============\n")
     simcse.build_index(example_sentences, use_faiss=True)
     results = simcse.search(example_queries)
@@ -283,4 +283,3 @@ if __name__=="__main__":
         for sentence, score in result:
             print("    {}  (cosine similarity: {:.4f})".format(sentence, score))
         print("")
-

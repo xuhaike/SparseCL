@@ -86,7 +86,7 @@ curl -Lo glove.840B.300d.zip http://nlp.stanford.edu/data/glove.840B.300d.zip
 curl -Lo crawl-300d-2M.vec.zip https://dl.fbaipublicfiles.com/fasttext/vectors-english/crawl-300d-2M.vec.zip
 ```
 
-To reproduce the results for bag-of-vectors, run (in examples/):  
+To reproduce the results for bag-of-vectors, run (in examples/):
 ```bash
 python bow.py
 ```

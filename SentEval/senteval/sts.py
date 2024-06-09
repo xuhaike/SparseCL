@@ -206,7 +206,7 @@ class STSBenchmarkFinetune(SICKEval):
 
         sick_data['y'] = [float(s) for s in sick_data['y']]
         return sick_data
-        
+
 class SICKRelatednessEval(STSEval):
     def __init__(self, task_path, seed=1111):
         logging.debug('\n\n***** Transfer task : SICKRelatedness*****\n\n')
@@ -217,7 +217,7 @@ class SICKRelatednessEval(STSEval):
         test = self.loadFile(os.path.join(task_path, 'SICK_test_annotated.txt'))
         self.datasets = ['train', 'dev', 'test']
         self.data = {'train': train, 'dev': dev, 'test': test}
-    
+
     def loadFile(self, fpath):
         skipFirstLine = True
         sick_data = {'X_A': [], 'X_B': [], 'y': []}

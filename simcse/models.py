@@ -27,7 +27,7 @@ class OurBertEncoder(nn.Module):
         self.config = config
         self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
         self.gradient_checkpointing = config.gradient_checkpointing
-        
+
     def _gradient_checkpointing_func(self, layer_call, *args, **kwargs):
         """
         A wrapper function for performing gradient checkpointing on a single layer.
@@ -37,7 +37,7 @@ class OurBertEncoder(nn.Module):
         tensor_args = tuple(arg for arg in args if isinstance(arg, torch.Tensor))
         # Use the `checkpoint` function from PyTorch, pass the callable (layer_call), followed by the arguments it needs
         return checkpoint(layer_call, *tensor_args, **kwargs)
-    
+
     def forward(
         self,
         hidden_states: torch.Tensor,
@@ -80,7 +80,7 @@ class OurBertEncoder(nn.Module):
                 past_key_value,
                 output_attentions,
             )
-            
+
             if self.gradient_checkpointing and self.training:
                 layer_outputs = self._gradient_checkpointing_func(
                     layer_module, *layer_args
@@ -289,7 +289,7 @@ def our_cl_forward(cls,
     # Hard negative
     if num_sent >2:
         z3 = pooler_output[:, 2]
-    
+
     if num_sent >3:
         z4 = pooler_output[:, 3]
 
@@ -358,19 +358,19 @@ def our_cl_forward(cls,
 
         l1_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=1,dim=-1),min=cls.sqrt_hidden_size*1e-6)
         l2_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=2,dim=-1),min=1e-6)
-        l1l2_ratio_z12=torch.mean(l1_normalized_z12/l2_normalized_z12)   
-        
+        l1l2_ratio_z12=torch.mean(l1_normalized_z12/l2_normalized_z12)
+
         l1_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=1,dim=-1),min=cls.sqrt_hidden_size*1e-6)
         l2_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=2,dim=-1),min=1e-6)
-        l1l2_ratio_z13=torch.mean(l1_normalized_z13/l2_normalized_z13)   
+        l1l2_ratio_z13=torch.mean(l1_normalized_z13/l2_normalized_z13)
 
 
-        l1_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=1,dim=-1),min=cls.sqrt_hidden_size*1e-6) 
+        l1_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=1,dim=-1),min=cls.sqrt_hidden_size*1e-6)
         l2_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=2,dim=-1),min=1e-6)
         l1l2_ratio_z12_all=torch.mean(l1_normalized_z12_all/l2_normalized_z12_all)
         hoyer_z12=(cls.sqrt_hidden_size-l1_normalized_z12_all/l2_normalized_z12_all)/(cls.sqrt_hidden_size-1)/cls.model_args.sparsity_temp
 
-        l1_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=1,dim=-1),min=cls.sqrt_hidden_size*1e-6) 
+        l1_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=1,dim=-1),min=cls.sqrt_hidden_size*1e-6)
         l2_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=2,dim=-1),min=1e-6)
         l1l2_ratio_z13_all=torch.mean(l1_normalized_z13_all/l2_normalized_z13_all)
 
@@ -407,19 +407,19 @@ def our_cl_forward(cls,
 
         l1_normalized_z12=torch.clamp(torch.norm(normalized_z12,p=1,dim=-1),min=1e-6)
         l2_normalized_z12=torch.norm(normalized_z12,p=2,dim=-1)
-        l2l1_ratio_z12=torch.mean(l2_normalized_z12/l1_normalized_z12)   
-        
+        l2l1_ratio_z12=torch.mean(l2_normalized_z12/l1_normalized_z12)
+
         l1_normalized_z13=torch.clamp(torch.norm(normalized_z13,p=1,dim=-1),min=1e-6)
         l2_normalized_z13=torch.norm(normalized_z13,p=2,dim=-1)
-        l2l1_ratio_z13=torch.mean(l2_normalized_z13/l1_normalized_z13)   
+        l2l1_ratio_z13=torch.mean(l2_normalized_z13/l1_normalized_z13)
 
 
-        l1_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=1,dim=-1),min=1e-6) 
+        l1_normalized_z12_all=torch.clamp(torch.norm(normalized_z12_all,p=1,dim=-1),min=1e-6)
         l2_normalized_z12_all=torch.norm(normalized_z12_all,p=2,dim=-1)
         l2l1_ratio_z12_all=torch.mean(l2_normalized_z12_all/l1_normalized_z12_all)
         l2l1_z12=l2_normalized_z12_all/l1_normalized_z12_all/cls.model_args.sparsity_temp
 
-        l1_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=1,dim=-1),min=1e-6) 
+        l1_normalized_z13_all=torch.clamp(torch.norm(normalized_z13_all,p=1,dim=-1),min=1e-6)
         l2_normalized_z13_all=torch.norm(normalized_z13_all,p=2,dim=-1)
         l2l1_ratio_z13_all=torch.mean(l2_normalized_z13_all/l1_normalized_z13_all)
 
@@ -456,11 +456,11 @@ def our_cl_forward(cls,
 
         l4_normalized_z12=torch.sum(torch.pow(normalized_z12,4),dim=-1)
         l22_normalized_z12=torch.clamp(torch.pow(torch.sum(torch.pow(normalized_z12,2),dim=-1),2),min=1e-6)
-        l422_ratio_z12=torch.mean(l4_normalized_z12/l22_normalized_z12)   
-        
+        l422_ratio_z12=torch.mean(l4_normalized_z12/l22_normalized_z12)
+
         l4_normalized_z13=torch.sum(torch.pow(normalized_z13,4),dim=-1)
         l22_normalized_z13=torch.clamp(torch.pow(torch.sum(torch.pow(normalized_z13,2),dim=-1),2),min=1e-6)
-        l422_ratio_z13=torch.mean(l4_normalized_z13/l22_normalized_z13)     
+        l422_ratio_z13=torch.mean(l4_normalized_z13/l22_normalized_z13)
 
 
         l4_normalized_z12_all=torch.sum(torch.pow(normalized_z12_all,4),dim=-1)
@@ -559,7 +559,7 @@ class our_BertForCL(BertPreTrainedModel):
 
         if self.model_args.do_mlm:
             self.lm_head = BertLMPredictionHead(config)
-        self.custom_epoch_info={    "loss":[],"cl_loss": [], "sparsity_loss":[], 
+        self.custom_epoch_info={    "loss":[],"cl_loss": [], "sparsity_loss":[],
                                     "l1l2_ratio_z12":[],"l1l2_ratio_z13":[],"l1l2_ratio_z13_all":[],
                                     "l2l1_ratio_z12":[],"l2l1_ratio_z13":[],"l2l1_ratio_z13_all":[],
                                     "l422_ratio_z12":[],"l422_ratio_z13":[],"l422_ratio_z13_all":[],

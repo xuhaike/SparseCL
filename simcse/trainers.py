@@ -146,12 +146,12 @@ class CLTrainer(Trainer):
             loss=[]
             with torch.no_grad():
                 for batch in eval_dataloader:
-                    
+
                     # self.check_overlapping(batch,original_batch)
                     # batch=batch.to(self.args.device)
-                    
+
                     input_ids=batch["input_ids"]
-                    
+
                     # are_identical_lines = torch.unique(input_ids.view(-1,input_ids.size(-1)), dim=0).size(0) != input_ids.size(0)*input_ids.size(1)
 
                     # if are_identical_lines is True:
@@ -181,11 +181,11 @@ class CLTrainer(Trainer):
                 tasks = ['STSBenchmark', 'SICKRelatedness', 'MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC']
             self.model.eval()
             results = se.eval(tasks)
-            
+
             stsb_spearman = results['STSBenchmark']['dev']['spearman'][0]
             sickr_spearman = results['SICKRelatedness']['dev']['spearman'][0]
 
-            metrics = {"eval_stsb_spearman": stsb_spearman, "eval_sickr_spearman": sickr_spearman, "eval_avg_sts": (stsb_spearman + sickr_spearman) / 2} 
+            metrics = {"eval_stsb_spearman": stsb_spearman, "eval_sickr_spearman": sickr_spearman, "eval_avg_sts": (stsb_spearman + sickr_spearman) / 2}
             if eval_senteval_transfer or self.args.eval_transfer:
                 avg_transfer = 0
                 for task in ['MR', 'CR', 'SUBJ', 'MPQA', 'SST2', 'TREC', 'MRPC']:
@@ -196,7 +196,7 @@ class CLTrainer(Trainer):
 
             self.log(metrics)
             return metrics
-        
+
     def _save_checkpoint(self, model, trial, metrics=None):
         """
         Compared to original implementation, we change the saving policy to
@@ -205,7 +205,7 @@ class CLTrainer(Trainer):
 
         # In all cases, including ddp/dp/deepspeed, self.model is always a reference to the model we
         # want to save.
-        
+
         #assert _model_unwrap(model) is self.model, "internal model should be a reference to self.model"
 
         # Determine the new best metric / best model checkpoint
@@ -298,7 +298,7 @@ class CLTrainer(Trainer):
             # Maybe delete some older checkpoints.
             if self.is_world_process_zero():
                 self._rotate_checkpoints(use_mtime=True)
-    
+
     def train(self, model_path: Optional[str] = None, trial: Union["optuna.Trial", Dict[str, Any]] = None):
         """
         Main training entry point.
@@ -309,8 +309,8 @@ class CLTrainer(Trainer):
                 training will resume from the optimizer/scheduler states loaded here.
             trial (:obj:`optuna.Trial` or :obj:`Dict[str, Any]`, `optional`):
                 The trial run or the hyperparameter dictionary for hyperparameter search.
-        
-        The main difference between ours and Huggingface's original implementation is that we 
+
+        The main difference between ours and Huggingface's original implementation is that we
         also load model_args when reloading best checkpoints for evaluation.
         """
         # This might change the seed so needs to run first.
@@ -333,7 +333,7 @@ class CLTrainer(Trainer):
 
         # Keeping track whether we can can len() on the dataset or not
         train_dataset_is_sized = isinstance(self.train_dataset, collections.abc.Sized)
-        
+
         # Data loader and number of training steps
         train_dataloader = self.get_train_dataloader()
 
@@ -385,7 +385,7 @@ class CLTrainer(Trainer):
             model = torch.nn.DataParallel(model)
 
         # Distributed training (should be after apex fp16 initialization)
-        
+
         # if self.sharded_ddp:
         # if self.sharded_dpp:
         #     model = ShardedDDP(model, self.optimizer)
@@ -482,7 +482,7 @@ class CLTrainer(Trainer):
         model.zero_grad()
 
         self.control = self.callback_handler.on_train_begin(self.args, self.state, self.control)
-        
+
         self.control.should_evaluate = False
 
         # Skip the first epochs_trained epochs to get the random state of the dataloader at the right point.
@@ -523,7 +523,7 @@ class CLTrainer(Trainer):
             last_inputs = None
             # omitted_batch=0
             for step, inputs in enumerate(epoch_iterator):
-                
+
                 if len(epoch_iterator)<1000:
                     self.check_overlapping(inputs,original_batch)
                 # Skip past any already trained steps if resuming training
@@ -575,7 +575,7 @@ class CLTrainer(Trainer):
                     #     self.scaler.update()
                     else:
                         self.optimizer.step()
-                    
+
                     self.lr_scheduler.step()
 
                     model.zero_grad()
@@ -628,7 +628,7 @@ class CLTrainer(Trainer):
 
             # with open(os.path.join(self.args.output_dir,f"custom_info"),"a") as custom_info_file:
                 # print(f"{omitted_batch}/{steps_in_epoch} batches are omitted in this epoch", file=custom_info_file)
-                        
+
 
             #avg_custom_epoch_info= {key: (sum(value) / len(value)).item() if len(value)>0 else 0 for key, value in model.custom_epoch_info.items()}
 

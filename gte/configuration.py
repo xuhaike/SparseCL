@@ -135,4 +135,3 @@ class NewConfig(PretrainedConfig):
         self.use_memory_efficient_attention = use_memory_efficient_attention
         self.logn_attention_scale = logn_attention_scale
         self.logn_attention_clip1 = logn_attention_clip1
-

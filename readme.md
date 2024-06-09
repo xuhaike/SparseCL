@@ -1,5 +1,5 @@
-# SparseCL 
-![Sentence Embedding](https://img.shields.io/badge/sentence-embedding-green) 
+# SparseCL
+![Sentence Embedding](https://img.shields.io/badge/sentence-embedding-green)
 This repository contains the official implementation and data for "SPARSECL: Sparse Contrastive Learning for
 Contradiction Retrieval".
 In the supplementary material, we provide the necessary code to reproduce our main results on the Arguana dataset. All the training and test data are located in the **data** folder.
