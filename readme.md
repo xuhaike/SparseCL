@@ -4,7 +4,7 @@ This repository contains the official implementation and data for "SPARSECL: Spa
 Contradiction Retrieval".
 In the supplementary material, we provide the necessary code to reproduce our main results on the Arguana dataset. All the training and test data are located in the **data** folder.
 
-[[Webpage](https://sparsecl.github.io/)] [[Paper](preprint.pdf)] [[Huggingface Dataset](https://huggingface.co/SparseCL/all-train-test-data)] [[Twitter](TBD)] [[Model Checkpoints](https://huggingface.co/SparseCL/all-train-test-data)]
+[[Webpage](https://sparsecl.github.io/)] [[Paper](preprint.pdf)] [[Huggingface Dataset](https://huggingface.co/SparseCL/all-train-test-data)] [[Twitter](TBD)] [[Model Checkpoints](https://huggingface.co/SparseCL)]
 
 ## Setup Environment
 
@@ -111,7 +111,28 @@ Finally, test Arguana by running the following script:
 # test on msmarco
 ./run_test_msmarco.sh
 ```
+Currently, we support: 'BAAI/bge-base-en-v1.5', 'WhereIsAI/UAE-Large-V1', 'Alibaba-NLP/gte-large-en-v1.5'
 
+### Data Cleaning
+If you want to run data cleaning experiments in our paper please use the following script:
+```bash
+python test_data_cleaning.py \
+    --dataset_name hotpotqa \
+    --cos_model_name gte \
+    --model_name_or_path {YOUR_GTE_CHECKPOINT} \
+    --write_path test_results/data_cleaning_hotpotqa \
+    --pooler_type avg \
+    --max_seq_length 256 \
+
+python test_data_cleaning.py \
+    --dataset_name msmarco \
+    --cos_model_name gte \
+    --model_name_or_path {YOUR_GTE_CHECKPOINT} \
+    --write_path test_results/data_cleaning_msmarco \
+    --pooler_type avg \
+    --max_seq_length 256 \
+```
+Currently, we evaluate on 'Alibaba-NLP/gte-large-en-v1.5'.
 ## Source Code Acknowledgement
 
 Part of our code is adapted from [SimCSE at Princeton NLP](https://github.com/princeton-nlp/SimCSE).
