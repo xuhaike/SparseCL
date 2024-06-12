@@ -35,10 +35,10 @@ from transformers.trainer_utils import is_main_process
 from transformers.data.data_collator import DataCollatorForLanguageModeling
 # from transformers.file_utils import cached_property, torch_required, is_torch_available, is_torch_tpu_available
 from transformers.file_utils import cached_property,  is_torch_available, is_torch_tpu_available
-from simcse.models import our_BertForCL
-from simcse.trainers import CLTrainer
+from sparsecl.models import our_BertForCL
+from sparsecl.trainers import CLTrainer
 
-from gte.modeling import NewModelForCL
+from sparsecl.gte.modeling import NewModelForCL
 
 from torch.utils.data import random_split
 
@@ -58,12 +58,6 @@ class ModelArguments:
         metadata={
             "help": "The model checkpoint for weights initialization."
             "Don't set if you want to train a model from scratch."
-        },
-    )
-    n_gpu: int = field(
-        default=1,
-        metadata={
-            "help": "Number of GPUs"
         },
     )
     model_type: Optional[str] = field(
@@ -96,7 +90,7 @@ class ModelArguments:
         },
     )
 
-    # SimCSE's arguments
+    # our's arguments
     temp: float = field(
         default=0.05,
         metadata={
@@ -134,35 +128,18 @@ class ModelArguments:
         }
     )
     model_name: str = field(
-        default="simcse",
+        default="bge",
         metadata={
             "help": "which type of model you are using"
         },
     )
-    soft_negative_weight: float = field(
-        default=0.69,
-        metadata={
-            "help": "The **logit** of weight for soft negatives (only effective if hard negatives are used)."
-        }
-    )
     loss_type: str = field(
-        default="simcse",
+        default="cos",
         metadata={
             "help": "which loss function to use"
         }
     )
-    reg_lambda: float = field(
-        default=0.01,
-        metadata={
-            "help": " regualarization strength"
-        }
-    )
-    sparsity_temp: float = field(
-        default=0.02,
-        metadata={
-            "help": "Temperature for sparsity softmax."
-        }
-    )
+
 
 
 @dataclass
@@ -328,7 +305,7 @@ def main():
 
     # Log on each process the small summary:
     logger.warning(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
+        f"Process rank: {training_args.local_rank}, device: {training_args.device}"
         + f" distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
     # Set the verbosity to info of the Transformers logger (on main process only):
@@ -408,7 +385,7 @@ def main():
         )
 
     if model_args.model_name_or_path:
-        if "our-bge" in model_args.model_name or "our-uae" in model_args.model_name:
+        if "our_bge" in model_args.model_name or "our_uae" in model_args.model_name:
             model = our_BertForCL.from_pretrained(
                 model_args.model_name_or_path,
                 from_tf=bool(".ckpt" in model_args.model_name_or_path),
@@ -418,7 +395,7 @@ def main():
                 use_auth_token=True if model_args.use_auth_token else None,
                 model_args=model_args
             )
-        elif "our-gte" in model_args.model_name:
+        elif "our_gte" in model_args.model_name:
             model = NewModelForCL.from_pretrained(
                 model_args.model_name_or_path,
                 model_args=model_args,
@@ -426,32 +403,6 @@ def main():
                 add_pooling_layer=True,
                 trust_remote_code=True,
             )
-        else:
-            if 'roberta' in model_args.model_name_or_path:
-                model = RobertaForCL.from_pretrained(
-                    model_args.model_name_or_path,
-                    from_tf=bool(".ckpt" in model_args.model_name_or_path),
-                    config=config,
-                    cache_dir=model_args.cache_dir,
-                    revision=model_args.model_revision,
-                    use_auth_token=True if model_args.use_auth_token else None,
-                    model_args=model_args
-                )
-            elif 'bert' in model_args.model_name_or_path:
-                model = BertForCL.from_pretrained(
-                    model_args.model_name_or_path,
-                    from_tf=bool(".ckpt" in model_args.model_name_or_path),
-                    config=config,
-                    cache_dir=model_args.cache_dir,
-                    revision=model_args.model_revision,
-                    use_auth_token=True if model_args.use_auth_token else None,
-                    model_args=model_args
-                )
-                if model_args.do_mlm:
-                    pretrained_model = BertForPreTraining.from_pretrained(model_args.model_name_or_path)
-                    model.lm_head.load_state_dict(pretrained_model.cls.predictions.state_dict())
-            else:
-                raise NotImplementedError
     else:
         raise NotImplementedError
         logger.info("Training new model from scratch")

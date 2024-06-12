@@ -1,12 +1,13 @@
 # BGE finetuning on HotpotQA dataset
 
+export CUDA_VISIBLE_DEVICES=0
+
 python train.py \
-    --model_name our-bge \
-    --model_name_or_path BAAI/bge-base-en-v1.5 \
-    --n_gpu 1 \
+    --model_name our_gte \
+    --model_name_or_path Alibaba-NLP/gte-large-en-v1.5 \
     --train_file data/hotpotqa_train_gpt4_final.csv \
     --eval_file data/hotpotqa_dev_gpt4_final.csv \
-    --output_dir result/our-bge-hotpotqa-finetune-bz64-lr2-ml256-0514 \
+    --output_dir results/our-gte-hotpotqa-finetune \
     --gradient_checkpointing True \
     --num_train_epochs 1 \
     --per_device_train_batch_size 64 \
@@ -18,7 +19,6 @@ python train.py \
     --pooler_type avg \
     --overwrite_output_dir \
     --temp 0.02 \
-    --sparsity_temp 0.02 \
     --loss_type cos \
     --dataloader_drop_last True \
     --do_train \

@@ -17,7 +17,7 @@ import os
 from dataclasses import dataclass, field
 
 from typing import Optional, List, Dict
-from simcse.models import our_BertForCL
+from sparsecl.models import our_BertForCL
 from multiprocessing import Pool
 import random
 from datetime import datetime
@@ -93,7 +93,6 @@ class ModelArguments:
         },
     )
 
-    # SimCSE's arguments
     temp: float = field(
         default=0.05,
         metadata={
@@ -206,20 +205,20 @@ our_model_path=model_args[0].model_name_or_path
 cos_model_path=model_args[0].cos_model_name_or_path
 
 if our_model_path is not None:
-    if "bge" in our_model_path:
-        model_name="our-bge"
-    elif "uae" in our_model_path:
-        model_name="our-uae"
-    elif "gte" in our_model_path:
-        model_name="our-gte"
+    if "bge" or "BGE" in our_model_path:
+        model_name="our_bge"
+    elif "uae" or "UAE" in our_model_path:
+        model_name="our_uae"
+    elif "gte" or "GTE" in our_model_path:
+        model_name="our_gte"
     config = AutoConfig.from_pretrained(our_model_path,trust_remote_code=True,)
 if cos_model_path is not None:
-    if "bge" in cos_model_path:
-        cos_model_name="our-bge"
-    elif "uae" in cos_model_path:
-        cos_model_name="our-uae"
-    elif "gte" in cos_model_path:
-        cos_model_name="our-gte"
+    if "bge" or "BGE" in cos_model_path:
+        cos_model_name="our_bge"
+    elif "uae" or "UAE" in cos_model_path:
+        cos_model_name="our_uae"
+    elif "gte" or "GTE" in cos_model_path:
+        cos_model_name="our_gte"
     config = AutoConfig.from_pretrained(cos_model_path,trust_remote_code=True,)
 write_path=model_args[0].write_path
 
@@ -237,7 +236,7 @@ if not os.path.exists(folder_path):
     # Create the folder
     os.makedirs(folder_path)
 
-output_file=open(os.path.join(write_path,f"test_{dataset_name}_parallel_output"),"w")
+output_file=open(os.path.join(write_path,f"test_data_cleaning_{dataset_name}_parallel_output"),"w")
 
 print("max_seq_length=", max_seq_length)
 print(model_name)
@@ -259,7 +258,7 @@ def mean_pooling(model_output, attention_mask):
 
 def sentence_embedding(model_name,input_texts,model_path=None):
     print(f"using model name: {model_name}")
-    if "our-gte" in model_name:
+    if "our_gte" in model_name:
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
         # device = "cpu"
@@ -267,7 +266,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         print("model path", model_path)
 
         tokenizer = AutoTokenizer.from_pretrained(model_path,trust_remote_code=True)
-        from gte.modeling import NewModelForCL
+        from sparsecl.gte.modeling import NewModelForCL
         model = NewModelForCL.from_pretrained(
                 model_path,
                 model_args=model_args[0],
@@ -296,7 +295,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
 
         raw_embeddings = torch.cat(outputs).cpu()
         print(raw_embeddings.shape)
-    elif "our-bge" in model_name or "our-uae" in model_name:
+    elif "our_bge" in model_name or "our_uae" in model_name:
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
         # device = "cpu"
@@ -395,32 +394,29 @@ def sentence_embedding(model_name,input_texts,model_path=None):
 # qrels=None
 # sim_qrels=None
 
-# def prepare_data(dataset_name,split):
-#     global cos_input_embeddings,cos_query_embeddings,input_embeddings,query_embeddings,corpus,queries,qrels,sim_qrels
-
 wrong_qrels=None
 
 gen_model_name="gpt4"
 # gen_model_name="gpt3.5"
 
 if dataset_name in ["msmarco","hotpotqa"]:
-    data_file_path=os.path.join("data/",f"{dataset_name}_cleaning33_{gen_model_name}_0513.pkl")
+    data_file_path=os.path.join("data/",f"{dataset_name}_cleaning_{gen_model_name}_final.pkl")
     with open(data_file_path, 'rb') as file:
         corpus=pickle.load(file)
         queries=pickle.load(file)
         qrels=pickle.load(file)
         wrong_qrels=pickle.load(file)
-elif dataset_name=="arguana":
-    data_path=f"./datasets/{dataset_name}/"
-    corpus, queries, qrels = GenericDataLoader(data_folder=data_path).load(split="test")
+else:
+    print("not implemented")
+    exit()
 
-for qid in list(qrels.keys())[:10]:
-    print(qid, qrels[qid])
-    for pid in qrels[qid]:
-        assert(pid in corpus)
+# for qid in list(qrels.keys())[:10]:
+#     print(qid, qrels[qid])
+#     for pid in qrels[qid]:
+#         assert(pid in corpus)
 
-for query_name in list(queries.keys())[:10]:
-    print(query_name,queries[query_name])
+# for query_name in list(queries.keys())[:10]:
+#     print(query_name,queries[query_name])
 
 no_title=True
 
@@ -459,8 +455,11 @@ for pid, value in corpus.items():
 print(len(input_texts))
 print(len(query_texts))
 
-cos_embedding_file_name=os.path.join("embedding_data/",f"{dataset_name}_{cos_model_name}_0513.pkl")
-import pdb; pdb.set_trace()
+if not os.path.exists("./embedding_data"):
+    os.makedirs("./embedding_data")
+
+cos_embedding_file_name=os.path.join("./embedding_data",f"{dataset_name}_{cos_model_name}.pkl")
+
 if os.path.exists(cos_embedding_file_name):
     with open(cos_embedding_file_name, 'rb') as file:
         cos_input_embeddings=pickle.load(file)
@@ -477,7 +476,7 @@ else:
 
 folders=os.path.normpath(our_model_path).split("/")
 
-our_embedding_file_name=os.path.join("embedding_data/",f"{dataset_name}_{folders[-1]}_0513.pkl")
+our_embedding_file_name=os.path.join("./embedding_data",f"{dataset_name}_{folders[-1]}.pkl")
 
 if os.path.exists(our_embedding_file_name):
     with open(our_embedding_file_name, 'rb') as file:
@@ -501,10 +500,13 @@ sqrt_dim=math.sqrt(dim)
 
 print("dim=",dim,"sqrt dim",sqrt_dim)
 
+if not os.path.exists("./indices"):
+    os.makedirs("./indices")
+
 if cos_model_path is not None:
-    index_name=os.path.join("./indices",f"cleaning33_{dataset_name}_{folders[-1]}_0513.faiss")
+    index_name=os.path.join("./indices",f"cleaning_{dataset_name}_{folders[-1]}.faiss")
 else:
-    index_name=os.path.join("./indices",f"cleaning33_{dataset_name}_{cos_model_name}_0513.faiss")
+    index_name=os.path.join("./indices",f"cleaning_{dataset_name}_{cos_model_name}.faiss")
 
 print("index name", index_name)
 
@@ -521,9 +523,9 @@ index.hnsw.efSearch = 5000
 k_neighbors=1000
 
 if cos_model_path is not None:
-    search_result_file=os.path.join("./indices",f"cleaning33_{dataset_name}_{folders[-1]}_0513_search_L{index.hnsw.efSearch}K{k_neighbors}.pkl")
+    search_result_file=os.path.join("./indices",f"cleaning_{dataset_name}_{folders[-1]}_search_L{index.hnsw.efSearch}K{k_neighbors}.pkl")
 else:
-    search_result_file=os.path.join("./indices",f"cleaning33_{dataset_name}_{cos_model_name}_0513_search_L{index.hnsw.efSearch}K{k_neighbors}.pkl")
+    search_result_file=os.path.join("./indices",f"cleaning_{dataset_name}_{cos_model_name}_search_L{index.hnsw.efSearch}K{k_neighbors}.pkl")
 
 if os.path.exists(search_result_file):
     with open(search_result_file, 'rb') as file:
@@ -544,33 +546,21 @@ model = DRES(models.SentenceBERT("BAAI/bge-base-en-v1.5"), batch_size=16)
 retriever = EvaluateRetrieval(model, score_function="cos_sim") # or "cos_sim" for cosine similarity
 
 
-def dist(A,B,metric="l1l2"):
-    if metric=="l1l2":
-        diff=A-B
-        diff_l1=np.linalg.norm(diff,ord=1)
-        diff_l2=np.linalg.norm(diff,ord=2)
-        if diff_l2<1e-3:
-            return 1e9
-        diff_l2l1_ratio=diff_l1/diff_l2
-        return diff_l2l1_ratio
-    elif metric=="hoyer":
+def dist(A,B,metric="hoyer"):
+    if metric=="hoyer":
         diff=A-B
         diff_l1=np.linalg.norm(diff,ord=1)
         diff_l2=np.linalg.norm(diff,ord=2)
         if diff_l2<1e-3:
             return -1e9
         hoyer=(sqrt_dim-diff_l1/diff_l2)/(sqrt_dim-1)
-        # print(diff_l1/diff_l2,hoyer)
         return hoyer
     elif metric=="cos":
         dot_product = np.dot(A, B)
         norm_a = np.linalg.norm(A)
         norm_b = np.linalg.norm(B)
         cosine_similarity = dot_product / (norm_a * norm_b)
-        # cosine_similarity=torch.nn.functional.cosine_similarity(A,B,dim=0).item()
         return cosine_similarity
-
-test_setting=0
 
 def process_query(query_name):
 
@@ -654,11 +644,7 @@ def retrieval_test():
                         if contra_pid in corpus:
                             contra_qrels[qid][contra_pid]=1
 
-
-    # query_args=query_args[:100]
-
     with Pool() as pool:
-    # with Pool(processes=1) as pool:
         pool_results = pool.map(process_query, query_args)
 
     results={}

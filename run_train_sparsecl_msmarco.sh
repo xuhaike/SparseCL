@@ -1,12 +1,13 @@
 # BGE finetuning on MSMARCO dataset using SparseCL
 
+export CUDA_VISIBLE_DEVICES=0
+
 python train.py \
-    --model_name our-bge \
-    --model_name_or_path BAAI/bge-base-en-v1.5 \
-    --n_gpu 1 \
+    --model_name our_uae \
+    --model_name_or_path WhereIsAI/UAE-Large-V1 \
     --train_file data/msmarco_train_gpt4_final.csv \
     --eval_file data/msmarco_dev_gpt4_final.csv \
-    --output_dir result/our-bge-msmarco-sparsity-bz64-lr2-ml256-0514 \
+    --output_dir results/our-uae-msmarco-sparsity \
     --gradient_checkpointing True \
     --num_train_epochs 3 \
     --per_device_train_batch_size 64 \
@@ -17,8 +18,7 @@ python train.py \
     --pad_to_max_length True \
     --pooler_type avg \
     --overwrite_output_dir \
-    --temp 0.02 \
-    --sparsity_temp 0.02 \
+    --temp 0.05 \
     --loss_type sparsity \
     --dataloader_drop_last True \
     --do_train \

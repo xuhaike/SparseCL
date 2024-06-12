@@ -25,8 +25,8 @@ from dataclasses import dataclass, field
 
 from typing import Optional, List, Dict
 
-from simcse.models import our_BertForCL
-from gte.modeling import NewModelForCL
+from sparsecl.models import our_BertForCL
+from sparsecl.gte.modeling import NewModelForCL
 from multiprocessing import Pool
 
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_MASKED_LM_MAPPING.keys())
@@ -96,7 +96,6 @@ class ModelArguments:
         },
     )
 
-    # SimCSE's arguments
     temp: float = field(
         default=0.05,
         metadata={
@@ -137,12 +136,6 @@ class ModelArguments:
         default=None,
         metadata={
             "help": "where to write test result"
-        },
-    )
-    eval_task: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "which task to eval"
         },
     )
     cos_model_name_or_path: Optional[str] = field(
@@ -225,6 +218,7 @@ def average_pool(last_hidden_states: Tensor,
     last_hidden = last_hidden_states.masked_fill(~attention_mask[..., None].bool(), 0.0)
     return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
 
+# either model name or model path is specified
 model_name=model_args[0].model_name
 cos_model_name=model_args[0].cos_model_name
 
@@ -232,20 +226,20 @@ our_model_path=model_args[0].model_name_or_path
 cos_model_path=model_args[0].cos_model_name_or_path
 
 if our_model_path is not None:
-    if "bge" in our_model_path:
-        model_name="our-bge"
-    elif "uae" in our_model_path:
-        model_name="our-uae"
-    elif "gte" in our_model_path:
-        model_name="our-gte"
+    if "bge" or "BGE" in our_model_path:
+        model_name="our_bge"
+    elif "uae" or "UAE" in our_model_path:
+        model_name="our_uae"
+    elif "gte" or "GTE" in our_model_path:
+        model_name="our_gte"
     config = AutoConfig.from_pretrained(our_model_path,trust_remote_code=True,)
 if cos_model_path is not None:
-    if "bge" in cos_model_path:
-        cos_model_name="our-bge"
-    elif "uae" in cos_model_path:
-        cos_model_name="our-uae"
-    elif "gte" in cos_model_path:
-        cos_model_name="our-gte"
+    if "bge" or "BGE" in cos_model_path:
+        cos_model_name="our_bge"
+    elif "uae" or "UAE" in cos_model_path:
+        cos_model_name="our_uae"
+    elif "gte" or "GTE" in cos_model_path:
+        cos_model_name="our_gte"
     config = AutoConfig.from_pretrained(cos_model_path,trust_remote_code=True,)
 write_path=model_args[0].write_path
 
@@ -262,9 +256,6 @@ print(cos_model_name)
 print(cos_model_path)
 
 random.seed(211)
-
-num_para=3
-max_para=3
 
 folder_path = write_path
 
@@ -283,10 +274,9 @@ def mean_pooling(model_output, attention_mask):
 
 def sentence_embedding(model_name,input_texts,model_path=None):
     print(f"using model name: {model_name}")
-    if "our-gte" in model_name:
+    if "our_gte" in model_name:
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
-        # device = "cpu"
 
         print("model path", model_path)
 
@@ -303,7 +293,6 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         model=model.to(device)
         model = torch.nn.DataParallel(model)
         batch_size=256
-        # inputs = [tokenizer(text, max_length=max_seq_length, padding=True, truncation=True, return_tensors='pt') for text in input_texts]
 
         # Create DataLoader for batching
         data_loader = DataLoader(input_texts, batch_size=batch_size)
@@ -319,13 +308,11 @@ def sentence_embedding(model_name,input_texts,model_path=None):
                 outputs.append(batch_outputs.pooler_output)
 
         raw_embeddings = torch.cat(outputs).cpu()
-        print(raw_embeddings.shape)
-    elif "our-bge" in model_name or "our-uae" in model_name:
+        # print(raw_embeddings.shape)
+    elif "our_bge" in model_name or "our_uae" in model_name:
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
-        # device = "cpu"
 
-        print(torch.cuda.device_count())
         print("model path", model_path)
 
         tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -341,7 +328,6 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         model=model.to(device)
         model = torch.nn.DataParallel(model)
         batch_size=512
-        # inputs = [tokenizer(text, max_length=max_seq_length, padding=True, truncation=True, return_tensors='pt') for text in input_texts]
 
         # Create DataLoader for batching
         data_loader = DataLoader(input_texts, batch_size=batch_size)
@@ -357,7 +343,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
                 outputs.append(batch_outputs.pooler_output)
 
         raw_embeddings = torch.cat(outputs).cpu()
-        print(raw_embeddings.shape)
+        # print(raw_embeddings.shape)
     elif "gte" in model_name or "bge" in model_name:
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
@@ -411,15 +397,22 @@ def sentence_embedding(model_name,input_texts,model_path=None):
     return raw_embeddings
 
 sim_qrels=None
+gen_model_name="gpt4"
 
 print(dataset_name, split)
 corpus={}
 for corpus_split in ["train","dev","test"]:
-    read_path=f"./data/arguana_{corpus_split}_retrieval_final.pkl"
+    if "arguana" in dataset_name:
+        read_path=f"./data/arguana_{corpus_split}_retrieval_final.pkl"
+    else:
+        read_path=f"./data/{dataset_name}_{corpus_split}_retrieval_{gen_model_name}_final.pkl"
     with open(read_path,"rb") as f:
         split_corpus=pickle.load(f)
     corpus={**corpus,**split_corpus}
-read_path=f"./data/arguana_{split}_retrieval_final.pkl"
+if "arguana" in dataset_name:
+    read_path=f"./data/arguana_{split}_retrieval_final.pkl"
+else:
+    read_path=f"./data/{dataset_name}_{split}_retrieval_{gen_model_name}_final.pkl"
 with open(read_path,"rb") as f:
     _=pickle.load(f)
     queries=pickle.load(f)
@@ -459,7 +452,10 @@ if "both" in sort_metric:
     query_embeddings=query_embeddings.to(torch.float32).numpy()
     sqrt_dim=math.sqrt(input_embeddings.shape[1])
 
+if not os.path.exists("./indices"):
+    os.makedirs("./indices")
 
+# build KNN index for embeddings
 if cos_model_path is not None:
     folders=os.path.normpath(cos_model_path).split("/")
     index_name=os.path.join("./indices",dataset_name+"-"+folders[-1]+".faiss")
@@ -478,6 +474,7 @@ else:
     faiss.write_index(index, index_name)
     print("index completes")
 
+# first search for the top 1000 passages based on cosine similarity, and then rerank them by combining cosine and sparsity
 index.hnsw.efSearch = 1000
 k_neighbors=1000
 D,ids=index.search(cos_query_embeddings,k=k_neighbors)
@@ -506,10 +503,6 @@ def dist(A,B,metric="hoyer"):
 
 
 def process_query(query_name):
-    if "para" in query_name:
-        para_id=int(query_name[query_name.find("para")+4])
-        if para_id>=max_para:
-            return ({},{})
 
     results={}
     cos_results={}
@@ -521,27 +514,16 @@ def process_query(query_name):
         for i in range(k_neighbors):
             pid=ids[qid][i]
             passage_name=passage_id[pid]
-            if "para" in passage_name:
-                para_id=int(passage_name[passage_name.find("para")+4])
-            else:
-                para_id=-1
-            if para_id<max_para:
-                score.append((dist(cos_input_embeddings[pid],cos_query_embeddings[qid],"cos"),passage_name))
+            score.append((dist(cos_input_embeddings[pid],cos_query_embeddings[qid],"cos"),passage_name))
         cos_results[query_name]={}
         for i in range(10):
             cos_results[query_name][score[i][1]]=float(score[i][0])
     elif "both_sum" in sort_metric:
-
         score=[]
         for i in range(k_neighbors):
             pid=ids[qid][i]
             passage_name=passage_id[pid]
-            if "para" in passage_name:
-                para_id=int(passage_name[passage_name.find("para")+4])
-            else:
-                para_id=-1
-            if para_id<max_para:
-                score.append((dist(cos_input_embeddings[pid],cos_query_embeddings[qid],"cos"),passage_name,dist(input_embeddings[pid],query_embeddings[qid],second_metric)))
+            score.append((dist(cos_input_embeddings[pid],cos_query_embeddings[qid],"cos"),passage_name,dist(input_embeddings[pid],query_embeddings[qid],second_metric)))
 
         cos_results[query_name]={}
         for i in range(10):
@@ -573,58 +555,31 @@ def retrieval_test():
 
     #### Evaluate your model with NDCG@k, MAP@K, Recall@K and Precision@K  where k = [1,3,5,10,100,1000]
 
-    test_qrels=copy.deepcopy(qrels)
-    for key in list(test_qrels.keys()):
-        for pid in list(test_qrels[key].keys()):
-            if "para" in pid:
-                para_id=int(pid[pid.find("para")+4])
-                if para_id>=max_para:
-                    del test_qrels[key][pid]
-        if "para" in key:
-            para_id=int(key[key.find("para")+4])
-            if para_id>=max_para:
-                del test_qrels[key]
-
-    if max_para>1 and sim_qrels is not None:
-        test_sim_qrels=copy.deepcopy(sim_qrels)
-        for key in list(test_sim_qrels.keys()):
-            for pid in list(test_sim_qrels[key].keys()):
-                if "para" in pid:
-                    para_id=int(pid[pid.find("para")+4])
-                    if para_id>=max_para:
-                        del test_sim_qrels[key][pid]
-            if "para" in key:
-                para_id=int(key[key.find("para")+4])
-                if para_id>=max_para:
-                    del test_sim_qrels[key]
-    else:
-        test_sim_qrels=None
-
     ret=0
     if results!={}:
         print("sparsity contradiction retrieval results")
         print("sparsity contradiction retrieval results",file=output_file)
-        ndcg, _map, recall, precision = retriever.evaluate(test_qrels, results, [1,10])
+        ndcg, _map, recall, precision = retriever.evaluate(qrels, results, [1,10])
         print(ndcg,recall)
         print(ndcg,recall,file=output_file)
         ret=ndcg["NDCG@10"]
-        if test_sim_qrels is not None:
+        if sim_qrels is not None:
             print("sparsity similarity retrieval results")
             print("sparsity similarity retrieval results",file=output_file)
-            ndcg, _map, recall, precision = retriever.evaluate(test_sim_qrels, results, [1,10])
+            ndcg, _map, recall, precision = retriever.evaluate(sim_qrels, results, [1,10])
             print(ndcg,recall)
             print(ndcg,recall,file=output_file)
 
     if cos_results!={}:
         print("cos contradiction retrieval results")
         print("cos contradiction retrieval results",file=output_file)
-        ndcg, _map, recall, precision = retriever.evaluate(test_qrels, cos_results, [1,10])
+        ndcg, _map, recall, precision = retriever.evaluate(qrels, cos_results, [1,10])
         print(ndcg,recall)
         print(ndcg,recall,file=output_file)
-        if test_sim_qrels is not None:
+        if sim_qrels is not None:
             print("cos similarity retrieval results")
             print("cos similarity retrieval results",file=output_file)
-            ndcg, _map, recall, precision = retriever.evaluate(test_sim_qrels, cos_results, [1,10])
+            ndcg, _map, recall, precision = retriever.evaluate(sim_qrels, cos_results, [1,10])
             print(ndcg,recall)
             print(ndcg,recall,file=output_file)
 
@@ -657,7 +612,6 @@ second_metric="hoyer"
 print(second_metric)
 
 if __name__ == '__main__':
-    max_para=3
     if model_args[0].alpha is not None:
         alpha_choice=model_args[0].alpha
     else:
@@ -681,11 +635,4 @@ if __name__ == '__main__':
     print("final alpha",alpha)
     print("final alpha",alpha,file=output_file)
 
-    if dataset_name=="arguana_aug":
-        for x in range(1,4):
-            max_para=x
-            print("max_para", max_para)
-            print("max_para", max_para,file=output_file)
-            retrieval_test()
-    else:
-        retrieval_test()
+    retrieval_test()
