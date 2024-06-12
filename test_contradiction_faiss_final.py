@@ -292,7 +292,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
 
         model=model.to(device)
         model = torch.nn.DataParallel(model)
-        batch_size=256
+        batch_size=64
 
         # Create DataLoader for batching
         data_loader = DataLoader(input_texts, batch_size=batch_size)
@@ -327,7 +327,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
 
         model=model.to(device)
         model = torch.nn.DataParallel(model)
-        batch_size=512
+        batch_size=64
 
         # Create DataLoader for batching
         data_loader = DataLoader(input_texts, batch_size=batch_size)
@@ -359,7 +359,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         model=model.to(device)
         model = torch.nn.DataParallel(model)
         model.eval()
-        batch_size=128
+        batch_size=64
 
         data_loader = DataLoader(input_texts, batch_size=batch_size)
         # Perform inference batch by batch
@@ -383,7 +383,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         from angle_emb import AnglE
 
         angle = AnglE.from_pretrained('WhereIsAI/UAE-Large-V1', pooling_strategy='cls').cuda()
-        batch_size=32
+        batch_size=64
         raw_embeddings=torch.zeros(len(input_texts), 1024)
         with torch.no_grad():
             for i in tqdm(range(0,len(input_texts),batch_size)):
