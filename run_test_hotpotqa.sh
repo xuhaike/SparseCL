@@ -6,9 +6,9 @@
 python test_contradiction_faiss_final.py \
     --dataset_name hotpotqa \
     --split dev \
-    --model_name_or_path results/our-bge-hotpotqa-sparsity \
-    --cos_model_name_or_path results/our-bge-hotpotqa-finetune \
-    --write_path test_results/dev_hotpotqa_bge_finetune_hoyer_faiss/ \
+    --model_name_or_path results/our-gte-hotpotqa-sparsity \
+    --cos_model_name_or_path results/our-gte-hotpotqa-finetune \
+    --write_path test_results/dev_hotpotqa_gte_finetune_hoyer_faiss/ \
     --pooler_type avg \
     --metric both_sum \
     --max_seq_length 256 \
@@ -18,9 +18,9 @@ python test_contradiction_faiss_final.py \
 python test_contradiction_faiss_final.py \
     --dataset_name hotpotqa \
     --split dev \
-    --model_name_or_path results/our-bge-hotpotqa-sparsity \
-    --cos_model_name bge \
-    --write_path test_results/dev_hotpotqa_bge_zeroshot_hoyer_faiss/ \
+    --model_name_or_path results/our-gte-hotpotqa-sparsity \
+    --cos_model_name gte \
+    --write_path test_results/dev_hotpotqa_gte_zeroshot_hoyer_faiss/ \
     --pooler_type avg \
     --metric both_sum \
     --max_seq_length 256 \
@@ -30,9 +30,9 @@ python test_contradiction_faiss_final.py \
 python test_contradiction_faiss_final.py \
     --dataset_name hotpotqa \
     --split test \
-    --model_name_or_path results/our-bge-hotpotqa-sparsity \
-    --cos_model_name_or_path results/our-bge-hotpotqa-finetune \
-    --write_path test_results/test_hotpotqa_bge_finetune_hoyer_faiss/ \
+    --model_name_or_path results/our-gte-hotpotqa-sparsity \
+    --cos_model_name_or_path results/our-gte-hotpotqa-finetune \
+    --write_path test_results/test_hotpotqa_gte_finetune_hoyer_faiss/ \
     --pooler_type avg \
     --metric both_sum \
     --max_seq_length 256 \
@@ -40,9 +40,9 @@ python test_contradiction_faiss_final.py \
 python test_contradiction_faiss_final.py \
     --dataset_name hotpotqa \
     --split test \
-    --model_name_or_path results/our-bge-hotpotqa-sparsity \
-    --cos_model_name bge \
-    --write_path test_results/test_hotpotqa_bge_zeroshot_hoyer_faiss/ \
+    --model_name_or_path results/our-gte-hotpotqa-sparsity \
+    --cos_model_name gte \
+    --write_path test_results/test_hotpotqa_gte_zeroshot_hoyer_faiss/ \
     --pooler_type avg \
     --metric both_sum \
     --max_seq_length 256 \

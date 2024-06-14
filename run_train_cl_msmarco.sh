@@ -1,4 +1,4 @@
-# BGE finetuning on MSMARCO dataset
+# UAE finetuning on MSMARCO dataset
 
 export CUDA_VISIBLE_DEVICES=0
 

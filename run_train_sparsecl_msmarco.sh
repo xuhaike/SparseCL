@@ -1,4 +1,4 @@
-# BGE finetuning on MSMARCO dataset using SparseCL
+# UAE finetuning on MSMARCO dataset using SparseCL
 
 export CUDA_VISIBLE_DEVICES=0
 

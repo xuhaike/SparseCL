@@ -1,4 +1,4 @@
-# BGE finetuning on HotpotQA dataset
+# GTE finetuning on HotpotQA dataset
 
 export CUDA_VISIBLE_DEVICES=0
 

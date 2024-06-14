@@ -226,19 +226,19 @@ our_model_path=model_args[0].model_name_or_path
 cos_model_path=model_args[0].cos_model_name_or_path
 
 if our_model_path is not None:
-    if "bge" or "BGE" in our_model_path:
+    if "bge" in our_model_path.lower():
         model_name="our_bge"
-    elif "uae" or "UAE" in our_model_path:
+    elif "uae" in our_model_path.lower():
         model_name="our_uae"
-    elif "gte" or "GTE" in our_model_path:
+    elif "gte" in our_model_path.lower():
         model_name="our_gte"
     config = AutoConfig.from_pretrained(our_model_path,trust_remote_code=True,)
 if cos_model_path is not None:
-    if "bge" or "BGE" in cos_model_path:
+    if "bge" in cos_model_path.lower():
         cos_model_name="our_bge"
-    elif "uae" or "UAE" in cos_model_path:
+    elif "uae" in cos_model_path.lower():
         cos_model_name="our_uae"
-    elif "gte" or "GTE" in cos_model_path:
+    elif "gte" in cos_model_path.lower():
         cos_model_name="our_gte"
     config = AutoConfig.from_pretrained(cos_model_path,trust_remote_code=True,)
 write_path=model_args[0].write_path

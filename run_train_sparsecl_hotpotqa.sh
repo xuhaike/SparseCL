@@ -1,4 +1,4 @@
-# BGE finetuning on HotpotQA dataset using SparseCL
+# GTE finetuning on HotpotQA dataset using SparseCL
 
 export CUDA_VISIBLE_DEVICES=0
 

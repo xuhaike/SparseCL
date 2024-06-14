@@ -1,5 +1,3 @@
-export CUDA_VISIBLE_DEVICES=0,1,2,3
-
 python test_data_cleaning.py \
     --dataset_name hotpotqa \
     --cos_model_name gte \
