@@ -695,7 +695,7 @@ class NewEncoder(nn.Module):
         super().__init__()
         self.config = config
         self.layer = nn.ModuleList([NewLayer(config) for _ in range(config.num_hidden_layers)])
-        self.gradient_checkpointing = config.gradient_checkpointing
+        self.gradient_checkpointing = config.gradient_checkpointing if hasattr(config, 'gradient_checkpointing') else False
 
     def _gradient_checkpointing_func(self, layer_call, hidden_states, attention_bias=None, rope_embeds=None, attention_scale=None, subset_indices=None, head_mask=None, output_attentions=False):
         tensor_args = [arg for arg in [hidden_states, attention_bias, attention_scale, subset_indices, head_mask] if arg is not None]

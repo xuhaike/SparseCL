@@ -26,7 +26,7 @@ class OurBertEncoder(nn.Module):
         super().__init__()
         self.config = config
         self.layer = nn.ModuleList([BertLayer(config) for _ in range(config.num_hidden_layers)])
-        self.gradient_checkpointing = config.gradient_checkpointing
+        self.gradient_checkpointing = config.gradient_checkpointing if hasattr(config, 'gradient_checkpointing') else False
 
     def _gradient_checkpointing_func(self, layer_call, *args, **kwargs):
         """
