@@ -205,19 +205,19 @@ our_model_path=model_args[0].model_name_or_path
 cos_model_path=model_args[0].cos_model_name_or_path
 
 if our_model_path is not None:
-    if "bge" or "BGE" in our_model_path:
+    if "bge" in our_model_path.lower():
         model_name="our_bge"
-    elif "uae" or "UAE" in our_model_path:
+    elif "uae" in our_model_path.lower():
         model_name="our_uae"
-    elif "gte" or "GTE" in our_model_path:
+    elif "gte" in our_model_path.lower():
         model_name="our_gte"
     config = AutoConfig.from_pretrained(our_model_path,trust_remote_code=True,)
 if cos_model_path is not None:
-    if "bge" or "BGE" in cos_model_path:
+    if "bge" in cos_model_path.lower():
         cos_model_name="our_bge"
-    elif "uae" or "UAE" in cos_model_path:
+    elif "uae" in cos_model_path.lower():
         cos_model_name="our_uae"
-    elif "gte" or "GTE" in cos_model_path:
+    elif "gte" in cos_model_path.lower():
         cos_model_name="our_gte"
     config = AutoConfig.from_pretrained(cos_model_path,trust_remote_code=True,)
 write_path=model_args[0].write_path
@@ -277,7 +277,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
 
         model=model.to(device)
         model = torch.nn.DataParallel(model)
-        batch_size=64
+        batch_size=128
         # inputs = [tokenizer(text, max_length=max_seq_length, padding=True, truncation=True, return_tensors='pt') for text in input_texts]
 
         # Create DataLoader for batching
@@ -293,7 +293,9 @@ def sentence_embedding(model_name,input_texts,model_path=None):
                 batch_outputs = model(**batch_inputs,output_hidden_states=True, return_dict=True, sent_emb=True)
                 outputs.append(batch_outputs.pooler_output)
 
-        raw_embeddings = torch.cat(outputs).cpu()
+        outputs_cpu = [output.cpu() for output in outputs]
+        raw_embeddings = torch.cat(outputs_cpu)
+        # raw_embeddings = torch.cat(outputs).cpu()
         print(raw_embeddings.shape)
     elif "our_bge" in model_name or "our_uae" in model_name:
         use_cuda = torch.cuda.is_available()
@@ -315,7 +317,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
 
         model=model.to(device)
         model = torch.nn.DataParallel(model)
-        batch_size=64
+        batch_size=128
         # inputs = [tokenizer(text, max_length=max_seq_length, padding=True, truncation=True, return_tensors='pt') for text in input_texts]
 
         # Create DataLoader for batching
@@ -331,8 +333,10 @@ def sentence_embedding(model_name,input_texts,model_path=None):
                 batch_outputs = model(**batch_inputs,output_hidden_states=True, return_dict=True, sent_emb=True)
                 outputs.append(batch_outputs.pooler_output)
 
-        raw_embeddings = torch.cat(outputs).cpu()
-        print(raw_embeddings.shape)
+        outputs_cpu = [output.cpu() for output in outputs]
+        raw_embeddings = torch.cat(outputs_cpu)
+        # raw_embeddings = torch.cat(outputs).cpu()
+        # print(raw_embeddings.shape)
     elif "gte" in model_name or "bge" in model_name:
         use_cuda = torch.cuda.is_available()
         device = torch.device("cuda" if use_cuda else "cpu")
@@ -348,7 +352,7 @@ def sentence_embedding(model_name,input_texts,model_path=None):
         model=model.to(device)
         model = torch.nn.DataParallel(model)
         model.eval()
-        batch_size=64
+        batch_size=128
 
         data_loader = DataLoader(input_texts, batch_size=batch_size)
         # Perform inference batch by batch
@@ -367,12 +371,14 @@ def sentence_embedding(model_name,input_texts,model_path=None):
                 mini_embeddings = torch.nn.functional.normalize(mini_embeddings, p=2, dim=1)
                 outputs.append(mini_embeddings)
 
-        raw_embeddings = torch.cat(outputs).cpu()
+        outputs_cpu = [output.cpu() for output in outputs]
+        raw_embeddings = torch.cat(outputs_cpu)
+        # raw_embeddings = torch.cat(outputs).cpu()
     elif model_name=="uae":
         from angle_emb import AnglE
 
         angle = AnglE.from_pretrained('WhereIsAI/UAE-Large-V1', pooling_strategy='cls').cuda()
-        batch_size=64
+        batch_size=128
         raw_embeddings=torch.zeros(len(input_texts), 1024)
         with torch.no_grad():
             for i in tqdm(range(0,len(input_texts),batch_size)):
@@ -400,7 +406,7 @@ gen_model_name="gpt4"
 # gen_model_name="gpt3.5"
 
 if dataset_name in ["msmarco","hotpotqa"]:
-    data_file_path=os.path.join("data/",f"{dataset_name}_cleaning_{gen_model_name}_final.pkl")
+    data_file_path=os.path.join("./data",f"{dataset_name}_cleaning_{gen_model_name}_final.pkl")
     with open(data_file_path, 'rb') as file:
         corpus=pickle.load(file)
         queries=pickle.load(file)
