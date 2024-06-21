@@ -3,7 +3,7 @@
 This repository contains the official implementation and data for "SPARSECL: Sparse Contrastive Learning for
 Contradiction Retrieval".
 
-[[Webpage](https://sparsecl.github.io/)] [[Paper](preprint.pdf)] [[Huggingface Dataset](https://huggingface.co/SparseCL/all-train-test-data)] [[Twitter](TBD)] [[Model Checkpoints](https://huggingface.co/SparseCL)]
+[[Webpage](https://sparsecl.github.io/)] [[Paper](https://arxiv.org/pdf/2406.10746)] [[Huggingface Dataset](https://huggingface.co/SparseCL/all-train-dev-test-data)] [[Twitter](TBD)] [[Model Checkpoints](https://huggingface.co/SparseCL)]
 
 ## Setup Environment
 
@@ -11,7 +11,7 @@ Before running the experiments, ensure that you have the correct environment set
 
 ## Download Training and Test Data
 
-Please download our training and test data from [Huggingface Dataset](https://huggingface.co/SparseCL/all-train-test-data) and put them in a new folder "./data"
+Please download our training and test data from [Huggingface Dataset](https://huggingface.co/SparseCL/all-train-dev-test-data) and put them in a new folder "./data"
 
 ## Running the Experiments
 
