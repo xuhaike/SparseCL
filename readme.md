@@ -1,6 +1,6 @@
 # SparseCL
 ![Sentence Embedding](https://img.shields.io/badge/sentence-embedding-green)
-This repository contains the official implementation and data for "SPARSECL: Sparse Contrastive Learning for
+This repository contains the official implementation and data for "SparseCL: Sparse Contrastive Learning for
 Contradiction Retrieval".
 
 [[Webpage](https://sparsecl.github.io/)] [[Paper](https://arxiv.org/pdf/2406.10746)] [[Huggingface Dataset](https://huggingface.co/SparseCL/all-train-dev-test-data)] [[Twitter](TBD)] [[Model Checkpoints](https://huggingface.co/SparseCL)]
