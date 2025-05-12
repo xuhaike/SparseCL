@@ -27,7 +27,6 @@ from typing import Optional, List, Dict
 
 from sparsecl.models import our_BertForCL
 from sparsecl.gte.modeling import NewModelForCL
-from multiprocessing import Pool
 
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_MASKED_LM_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
@@ -542,8 +541,9 @@ def retrieval_test():
     for query_name in qrels:
         query_args.append(query_name)
 
-    with Pool() as pool:
-        pool_results = pool.map(process_query, query_args)
+    pool_results = []
+    for query in query_args:
+        pool_results.append(process_query(query))
 
     results={}
     cos_results={}
